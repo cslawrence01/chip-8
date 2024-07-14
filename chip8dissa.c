@@ -38,19 +38,36 @@ void DisassembleChip8Op(uint8_t *codebuffer, int pc)
             {
                 uint8_t firstnib = code[0] & 0x0f;
                 // this instruction is goto NNN or jumps to address NNN
-                printf("JUMP #$%01x%02x", firstnib, code[1]);
+                printf("%-10s #$%01x%02x", "JUMP", firstnib, code[1]); 
             }
             break;
       
         case 0x02:
             {
                 uint8_t firstnib = code[0] & 0x0f;
-                printf("CALL #$%01x%02x", firstnib, code[1]);
+                printf("%-10s #$%01x%02x", "CALL", firstnib, code[1]); 
             }
             break;  
-        case 0x03: printf("3 not handled yet"); break;    
-        case 0x04: printf("4 not handled yet"); break;    
-        case 0x05: printf("5 not handled yet"); break;    
+        case 0x03:
+            {
+                uint8_t reg = code[0] & 0x0f;
+                printf("%-10s V%01X,#$%02x", "SKIP.EQ", reg, code[1]); 
+            }
+            break;
+        case 0x04:
+            {
+                uint8_t reg = code[0] & 0x0f;
+                printf("%-10s V%01X,#$%02x", "SKIP.NE", reg, code[1]); 
+            }
+            break;   
+        case 0x05:
+            {
+                // 5XY0... skips next instruction if (Vx == Vy)
+                uint8_t reg_x = code[0] & 0x0f;
+                uint8_t reg_y = code[1] >> 4;
+                printf("%-10s V%01X,V%01x", "SKIP.EQ", reg_x, reg_y); 
+            }
+            break; 
         case 0x06:    
             {    
                 // this sets Vx = NN, so #$ signifies a constant
@@ -58,9 +75,77 @@ void DisassembleChip8Op(uint8_t *codebuffer, int pc)
                 printf("%-10s V%01X,#$%02x", "MVI", reg, code[1]);    
             }    
             break;    
-        case 0x07: printf("7 not handled yet"); break;    
-        case 0x08: printf("8 not handled yet"); break;    
-        case 0x09: printf("9 not handled yet"); break;    
+        case 0x07:
+            {    
+                // Adds NN to VX (carry flag is not changed), opcode == 7XNN
+                uint8_t reg = code[0] & 0x0f;    
+                printf("%-10s V%01X,#$%02x", "ADD", reg, code[1]);    
+            }    
+            break;
+        case 0x08:
+            // must obtain last nibble of second byte.. has values from 0..7 and E
+            {
+                uint8_t reg_x = code[0] & 0x0f;
+                uint8_t reg_y = code[1] >> 4;
+                uint8_t lastnibble = code[1] & 0x0f;
+                switch (lastnibble)
+                {
+                    case 0x00:
+                        {
+                            printf("%-10s V%01x,V%01x", "MOV", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x01:
+                        {
+                            printf("%-10s V%01x,V%01x", "OR", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x02:
+                        {
+                            printf("%-10s V%01x,V%01x", "AND", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x03:
+                        {
+                            printf("%-10s V%01x,V%01x", "XOR", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x04:
+                        {
+                            printf("%-10s V%01x,V%01x", "ADD.", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x05:
+                        {
+                            printf("%-10s V%01x,V%01x", "SUB.", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x06:
+                        {
+                            printf("%-10s V%01x", "SHR.", reg_x);
+                        }
+                        break;
+                    case 0x07:
+                        {
+                            printf("%-10s V%01x,V%01x", "SUBB.", reg_x, reg_y);
+                        }
+                        break;
+                    case 0x0e:
+                        {
+                            printf("%-10s V%01x", "SHR.", reg_x);
+                        }
+                        break;
+                }
+            }
+            break;
+        case 0x09:
+            {
+                // skips the next instruction if VX does not equal VY... 9XY0
+                uint8_t reg_x = code[0] & 0x0f;
+                uint8_t reg_y = code[1] >> 4;
+                printf("%-10s V%01X,V%01x", "SKIP.NE", reg_x, reg_y); 
+            }
+            break; 
         case 0x0a:    
             {   
                 // Sets I to the address NNN, which is in ANNN, a is the first nibble 
