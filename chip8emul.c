@@ -53,7 +53,15 @@ void EmulateChip8Op(Chip8State *state)
                 state->PC+=2;    
             }    
             break;    
-        case 0x04: UnimplementedInstruction(state); break;    
+        case 0x04:
+            {
+                // This opcode skips the next instruction if VX does not equal NN
+                uint8_t reg = code[0] & 0xf;    
+                if (state->V[reg] != code[1])    
+                    state->PC+=2;    
+                state->PC+=2; 
+            }
+            break;   
         case 0x05: UnimplementedInstruction(state); break;    
         case 0x06:                      //MOV VX,#$NN    
             {    
